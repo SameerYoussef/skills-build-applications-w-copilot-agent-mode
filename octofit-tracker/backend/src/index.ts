@@ -1,6 +1,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import { connectDB } from './config/database.js';
+import { getApiUrl } from './server.js';
 import usersRouter from './routes/users.js';
 import teamsRouter from './routes/teams.js';
 import activitiesRouter from './routes/activities.js';
@@ -10,19 +11,10 @@ import workoutsRouter from './routes/workouts.js';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 8000;
+const PORT = Number(process.env.PORT) || 8000;
 
-// Codespaces-aware API URL configuration
-const getApiUrl = (): string => {
-  if (process.env.CODESPACE_NAME) {
-    // Use Codespaces public URL format: https://$CODESPACE_NAME-8000.app.github.dev
-    return `https://${process.env.CODESPACE_NAME}-8000.app.github.dev`;
-  }
-  // Fallback to localhost for local development
-  return `http://localhost:${PORT}`;
-};
-
-const API_URL = getApiUrl();
+// Codespaces-aware API URL configuration (see server.ts)
+const API_URL = getApiUrl(PORT);
 
 // Middleware
 app.use(express.json());
