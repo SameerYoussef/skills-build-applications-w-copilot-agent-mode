@@ -1,18 +1,34 @@
 import mongoose from 'mongoose';
 
-const connectionString = process.env.MONGODB_URI || 'mongodb://localhost:27017/octofit_db';
-const db = mongoose.connection;
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/octofit_db';
 
-mongoose
-  .connect(connectionString)
-  .then(() => {
-    console.log('Connected to octofit_db');
-  })
-  .catch((error: any) => {
-    console.error('Error connecting to octofit_db:', error);
-    process.exit(1);
-  });
+// Create connection options
+const mongooseOptions = {
+  serverSelectionTimeoutMS: 10000,
+  socketTimeoutMS: 45000,
+  retryWrites: true,
+  w: 'majority' as const
+};
 
-db.on('error', console.error.bind(console, 'connection error:'));
+export async function connectDB() {
+  try {
+    await mongoose.connect(MONGODB_URI, mongooseOptions);
+    console.log('✓ Connected to MongoDB');
+    return mongoose.connection;
+  } catch (error: any) {
+    console.error('✗ MongoDB connection error:', error.message);
+    throw error;
+  }
+}
+
+export const db = mongoose.connection;
+
+db.on('error', (err) => {
+  console.error('MongoDB connection error:', err);
+});
+
+db.on('disconnected', () => {
+  console.warn('MongoDB disconnected');
+});
 
 export default db;

@@ -1,6 +1,6 @@
 import express from 'express';
 import dotenv from 'dotenv';
-import db from './config/database.js';
+import { connectDB } from './config/database.js';
 import usersRouter from './routes/users.js';
 import teamsRouter from './routes/teams.js';
 import activitiesRouter from './routes/activities.js';
@@ -12,11 +12,13 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 8000;
 
-// Codespaces-aware API URL support
+// Codespaces-aware API URL configuration
 const getApiUrl = (): string => {
   if (process.env.CODESPACE_NAME) {
-    return `https://${process.env.CODESPACE_NAME}-8000.${process.env.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN || 'preview.app.github.dev'}`;
+    // Use Codespaces public URL format: https://$CODESPACE_NAME-8000.app.github.dev
+    return `https://${process.env.CODESPACE_NAME}-8000.app.github.dev`;
   }
+  // Fallback to localhost for local development
   return `http://localhost:${PORT}`;
 };
 
@@ -68,9 +70,21 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`API URL: ${API_URL}`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-});
+// Connect to MongoDB and start server
+async function startServer() {
+  try {
+    console.log('Connecting to MongoDB...');
+    await connectDB();
+
+    app.listen(PORT, () => {
+      console.log(`✓ Server running on port ${PORT}`);
+      console.log(`✓ API URL: ${API_URL}`);
+      console.log(`✓ Environment: ${process.env.NODE_ENV || 'development'}`);
+    });
+  } catch (error: any) {
+    console.error('✗ Failed to start server:', error.message);
+    process.exit(1);
+  }
+}
+
+startServer();
